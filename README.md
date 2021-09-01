@@ -1,23 +1,22 @@
 ## Project Title
-Our system consists of Nursing / Private Homes.
-Each Nursing / Private Home has seniors.
-Each senior can have a sensor.
+Our system consists of Nursing / Private Homes.<br/>
+Each Nursing / Private Home has seniors.<br/>
+Each senior can have a sensor.<br/>
 A sensor paired to a senior communicates the senior’s body functions (e.g. temperature,
-posture) to our backend.
+posture) to our backend.<br/>
 There are 5 functionality endpoints and 1 authorization endpoint.
-The implemented endpoints consist of:
-storing a home object to the database,
-storing a sensor object to the database,
-storing a senior object to the database,
-retrieving all senior objects from the database,
-retrieving the senior object by id from the database,
-assign a sensor that is available to a senior,
-returning a JWT object for authorization signed by a Private key 
-and containing a name in the payload.
-The functionality was implemented using a REST API.
+The implemented endpoints consist of:<br/>
+storing a home object to the database,<br/>
+storing a sensor object to the database,<br/>
+storing a senior object to the database,<br/>
+retrieving all senior objects from the database,<br/>
+retrieving the senior object by id from the database,<br/>
+assign a sensor that is available to a senior,<br/>
+returning a JWT object for authorization signed by a Private key and containing a name in the payload.
+The functionality was implemented using a REST API.<br/>
 
 ## Motivation
-Backend Junior Software Engineer Challenge.
+Backend Junior Software Engineer Challenge.<br/>
 (All given Parts were implemented)
 
 ## Build Status
@@ -30,7 +29,7 @@ endpoints that were to use the Authorization were linked with the authorizer by 
 ## Tech/Framework used
 AWS ecosystem(Lambda, DynamoDB, API Gateway) and use Node.js-Typescript.
 
-Code Examples and API reference is provided:
+Code Examples and API reference is provided:<br/>
 In the Test Cases below.
 
 ## Installation
