@@ -1,0 +1,192 @@
+# Happy Coding!
+
+service: senior
+
+frameworkVersion: '2'
+
+#PROVIDER ---------------------------------------
+
+provider:
+ name: aws
+ runtime: nodejs12.x
+ stage: dev
+ region: us-east-1
+ lambdaHashingVersion: 20201221 
+ environment:
+  SENIORS_TABLE: "SENIORS-TABLE-${self:service}-${opt:stage, self:provider.stage}"
+  SENSORS_TABLE: "SENSORS-TABLE-${self:service}-${opt:stage, self:provider.stage}"
+  HOMES_TABLE: "HOMES-TABLE-${self:service}-${opt:stage, self:provider.stage}"
+ iamRoleStatements:
+  - Effect: Allow
+    Action:
+     - dynamodb:Query
+     - dynamodb:Scan
+     - dynamodb:GetItem
+     - dynamodb:PutItem
+     - dynamodb:UpdateItem
+    Resource: "*"
+
+# FUNCTIONS -------------------------------------
+functions:
+# senior ------------
+
+ seniorSubmission:
+  handler: api/senior.submit
+  memorySize: 128
+  description: Submit senior information.
+  events:
+   - http:
+      path: seniors
+      method: post
+       
+ listSeniors:
+    handler: api/senior.list
+    memorySize: 128
+    description: List all seniors
+    events:
+     - http: 
+        path: seniors
+        method: get
+
+ seniorDetails:
+    handler: api/senior.get
+    events:
+      - http:
+          path: seniors/{id}
+          method: get
+
+# home -------------------
+
+ homeSubmission:
+  handler: api/home.submit
+  memorySize: 128
+  description: submits home with homeid,name,type(NURSING/PRIVATE)
+  events:
+   - http:
+      path: homes
+      method: post
+
+# sensor ----------------
+
+ sensorSubmission:
+  handler: api/sensor.submit
+  memorySize: 128
+  description: submits sensor with sensorid, hardwareVersion, softwareVersion
+  events:
+   - http:
+      path: sensors
+      method: post
+
+ sensorAssignment:
+  handler: api/sensorAssignment.assignSensor
+  memorySize: 128
+  description: Finds seior by id and assigns sensor by id to that senior
+  events:
+    - http:
+       path: assignment/{sid}
+       method: post
+       
+# authenticator ---------------
+
+ authentication:
+  handler: api/authentication.authFunc
+  memorySize: 128
+  description: token authorization
+  events:
+    - http:
+       path: authentication
+       method: post
+
+#JWT token creator ------------
+
+ jwtTokenReturner:
+  handler: api/jwtTokenReturner.tokenReturner
+  memorySize: 128
+  description: returns a token with value and payload (expires 1h)
+  events:
+    - http:
+       path: jwtToken
+       method: get
+
+# RESOURCES ----------------------------------
+
+resources:
+  Resources:     
+    CustomLambdaAuthenticator:      
+      Type: AWS::ApiGateway::Authorizer
+      Properties:  
+        AuthorizerUri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:958685683239:function:authentication/invocations
+        AuthorizerResultTtlInSeconds: '300'       
+        Type: TOKEN
+        IdentitySource: method.request.header.authorizationToken
+        Name: DefaultAuthorizer
+        RestApiId: 5v4mxvtxi2 
+    SeniorsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "id"
+            AttributeType: "S"
+          - AttributeName: "sensorId"
+            AttributeType: "S"   
+        KeySchema:
+          -
+            AttributeName: "id"
+            KeyType: "HASH"        
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:provider.environment.SENIORS_TABLE}
+        GlobalSecondaryIndexes:
+        - IndexName: sensorsIdTable
+          KeySchema:
+          - AttributeName: "sensorId"
+            KeyType: "HASH"
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+          Projection:
+            NonKeyAttributes:
+              - sensorId
+            ProjectionType: INCLUDE                    
+    HomesDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "homeid"
+            AttributeType: "S"                 
+        KeySchema:
+          -
+            AttributeName: "homeid"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:provider.environment.HOMES_TABLE}
+    SensorsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: "sensorid"
+            AttributeType: "S"                 
+        KeySchema:
+          -
+            AttributeName: "sensorid"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:provider.environment.SENSORS_TABLE}
+   

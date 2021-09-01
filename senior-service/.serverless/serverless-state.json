@@ -1,0 +1,2013 @@
+{
+  "service": {
+    "service": "senior",
+    "serviceObject": {
+      "name": "senior"
+    },
+    "provider": {
+      "name": "aws",
+      "runtime": "nodejs12.x",
+      "stage": "dev",
+      "region": "us-east-1",
+      "lambdaHashingVersion": "20201221",
+      "environment": {
+        "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+        "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+        "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+      },
+      "iamRoleStatements": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "dynamodb:Query",
+            "dynamodb:Scan",
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem"
+          ],
+          "Resource": "*"
+        }
+      ],
+      "versionFunctions": true,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "SeniorSubmissionLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/senior-dev-seniorSubmission"
+            }
+          },
+          "ListSeniorsLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/senior-dev-listSeniors"
+            }
+          },
+          "SeniorDetailsLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/senior-dev-seniorDetails"
+            }
+          },
+          "HomeSubmissionLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/senior-dev-homeSubmission"
+            }
+          },
+          "SensorSubmissionLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/senior-dev-sensorSubmission"
+            }
+          },
+          "SensorAssignmentLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/senior-dev-sensorAssignment"
+            }
+          },
+          "AuthenticationLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/senior-dev-authentication"
+            }
+          },
+          "JwtTokenReturnerLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/senior-dev-jwtTokenReturner"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "senior",
+                        "dev",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream",
+                          "logs:CreateLogGroup"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/senior-dev*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/senior-dev*:*:*"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "$[\"service\"][\"provider\"][\"iamRoleStatements\"][0]"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "senior",
+                    "dev",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "SeniorSubmissionLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z/senior.zip"
+              },
+              "Handler": "api/senior.submit",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "senior-dev-seniorSubmission",
+              "MemorySize": 128,
+              "Timeout": 6,
+              "Description": "Submit senior information.",
+              "Environment": {
+                "Variables": {
+                  "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+                  "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+                  "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "SeniorSubmissionLogGroup"
+            ]
+          },
+          "ListSeniorsLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z/senior.zip"
+              },
+              "Handler": "api/senior.list",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "senior-dev-listSeniors",
+              "MemorySize": 128,
+              "Timeout": 6,
+              "Description": "List all seniors",
+              "Environment": {
+                "Variables": {
+                  "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+                  "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+                  "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "ListSeniorsLogGroup"
+            ]
+          },
+          "SeniorDetailsLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z/senior.zip"
+              },
+              "Handler": "api/senior.get",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "senior-dev-seniorDetails",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+                  "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+                  "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "SeniorDetailsLogGroup"
+            ]
+          },
+          "HomeSubmissionLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z/senior.zip"
+              },
+              "Handler": "api/home.submit",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "senior-dev-homeSubmission",
+              "MemorySize": 128,
+              "Timeout": 6,
+              "Description": "submits home with homeid,name,type(NURSING/PRIVATE)",
+              "Environment": {
+                "Variables": {
+                  "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+                  "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+                  "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "HomeSubmissionLogGroup"
+            ]
+          },
+          "SensorSubmissionLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z/senior.zip"
+              },
+              "Handler": "api/sensor.submit",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "senior-dev-sensorSubmission",
+              "MemorySize": 128,
+              "Timeout": 6,
+              "Description": "submits sensor with sensorid, hardwareVersion, softwareVersion",
+              "Environment": {
+                "Variables": {
+                  "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+                  "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+                  "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "SensorSubmissionLogGroup"
+            ]
+          },
+          "SensorAssignmentLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z/senior.zip"
+              },
+              "Handler": "api/sensorAssignment.assignSensor",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "senior-dev-sensorAssignment",
+              "MemorySize": 128,
+              "Timeout": 6,
+              "Description": "Finds seior by id and assigns sensor by id to that senior",
+              "Environment": {
+                "Variables": {
+                  "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+                  "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+                  "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "SensorAssignmentLogGroup"
+            ]
+          },
+          "AuthenticationLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z/senior.zip"
+              },
+              "Handler": "api/authentication.authFunc",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "senior-dev-authentication",
+              "MemorySize": 128,
+              "Timeout": 6,
+              "Description": "token authorization",
+              "Environment": {
+                "Variables": {
+                  "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+                  "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+                  "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "AuthenticationLogGroup"
+            ]
+          },
+          "JwtTokenReturnerLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z/senior.zip"
+              },
+              "Handler": "api/jwtTokenReturner.tokenReturner",
+              "Runtime": "nodejs12.x",
+              "FunctionName": "senior-dev-jwtTokenReturner",
+              "MemorySize": 128,
+              "Timeout": 6,
+              "Description": "returns a token with value and payload (expires 1h)",
+              "Environment": {
+                "Variables": {
+                  "SENIORS_TABLE": "SENIORS-TABLE-senior-dev",
+                  "SENSORS_TABLE": "SENSORS-TABLE-senior-dev",
+                  "HOMES_TABLE": "HOMES-TABLE-senior-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "JwtTokenReturnerLogGroup"
+            ]
+          },
+          "SeniorSubmissionLambdaVersion1BYUoi0rAHLrLzOwuHNGtmU3xDkP5tYzpwamKLFVgDk": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "SeniorSubmissionLambdaFunction"
+              },
+              "CodeSha256": "1qcKk5X5sLAoxJG6Dycspukr14IDpujzRJ+Dx0pzGys=",
+              "Description": "Submit senior information."
+            }
+          },
+          "ListSeniorsLambdaVersione2NbtvMNUQcodRmpY10j0HSw1uJwPr3NmZe4E08bq38": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "ListSeniorsLambdaFunction"
+              },
+              "CodeSha256": "1qcKk5X5sLAoxJG6Dycspukr14IDpujzRJ+Dx0pzGys=",
+              "Description": "List all seniors"
+            }
+          },
+          "SeniorDetailsLambdaVersionYYhxV75k5WU1JKvWtzjDdMKCWYnUy1gQg0HIv7Mh4SY": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "SeniorDetailsLambdaFunction"
+              },
+              "CodeSha256": "1qcKk5X5sLAoxJG6Dycspukr14IDpujzRJ+Dx0pzGys="
+            }
+          },
+          "HomeSubmissionLambdaVersion3QudX5JpZGXCFSMU7Urcy2L1vdZn8ZxYnjUlGZMQCX4": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "HomeSubmissionLambdaFunction"
+              },
+              "CodeSha256": "1qcKk5X5sLAoxJG6Dycspukr14IDpujzRJ+Dx0pzGys=",
+              "Description": "submits home with homeid,name,type(NURSING/PRIVATE)"
+            }
+          },
+          "SensorSubmissionLambdaVersionkhvj75EhHxSjbsDvbqWPQpE0DcJXJau7iz60hMWoFso": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "SensorSubmissionLambdaFunction"
+              },
+              "CodeSha256": "1qcKk5X5sLAoxJG6Dycspukr14IDpujzRJ+Dx0pzGys=",
+              "Description": "submits sensor with sensorid, hardwareVersion, softwareVersion"
+            }
+          },
+          "SensorAssignmentLambdaVersioneLnuOY22h8Qhhhjy8Ou6GiV4rHhEHdhA6QsuG8tPD0": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "SensorAssignmentLambdaFunction"
+              },
+              "CodeSha256": "1qcKk5X5sLAoxJG6Dycspukr14IDpujzRJ+Dx0pzGys=",
+              "Description": "Finds seior by id and assigns sensor by id to that senior"
+            }
+          },
+          "AuthenticationLambdaVersionFGvFkJmAg1iIS74Yg2wGLBuTCWqVuc330sa8o1M1E": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "AuthenticationLambdaFunction"
+              },
+              "CodeSha256": "1qcKk5X5sLAoxJG6Dycspukr14IDpujzRJ+Dx0pzGys=",
+              "Description": "token authorization"
+            }
+          },
+          "JwtTokenReturnerLambdaVersionXCMOvtcnD82K2ucXRreNdIVCH51nPb7rKHmXB0WA": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "JwtTokenReturnerLambdaFunction"
+              },
+              "CodeSha256": "1qcKk5X5sLAoxJG6Dycspukr14IDpujzRJ+Dx0pzGys=",
+              "Description": "returns a token with value and payload (expires 1h)"
+            }
+          },
+          "ApiGatewayRestApi": {
+            "Type": "AWS::ApiGateway::RestApi",
+            "Properties": {
+              "Name": "dev-senior",
+              "EndpointConfiguration": {
+                "Types": [
+                  "EDGE"
+                ]
+              },
+              "Policy": ""
+            }
+          },
+          "ApiGatewayResourceSeniors": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "seniors",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceSeniorsIdVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceSeniors"
+              },
+              "PathPart": "{id}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceHomes": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "homes",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceSensors": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "sensors",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAssignment": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "assignment",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAssignmentSidVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceAssignment"
+              },
+              "PathPart": "{sid}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceAuthentication": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "authentication",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceJwttoken": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "jwtToken",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayMethodSeniorsPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceSeniors"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "SeniorSubmissionLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "SeniorSubmissionLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodSeniorsGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceSeniors"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "ListSeniorsLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "ListSeniorsLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodSeniorsIdVarGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceSeniorsIdVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "SeniorDetailsLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "SeniorDetailsLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodHomesPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceHomes"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "HomeSubmissionLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "HomeSubmissionLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodSensorsPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceSensors"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "SensorSubmissionLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "SensorSubmissionLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodAssignmentSidVarPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAssignmentSidVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "SensorAssignmentLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "SensorAssignmentLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodAuthenticationPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceAuthentication"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "AuthenticationLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "AuthenticationLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodJwttokenGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceJwttoken"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "JwtTokenReturnerLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "JwtTokenReturnerLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1630445810026": {
+            "Type": "AWS::ApiGateway::Deployment",
+            "Properties": {
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "StageName": "dev"
+            },
+            "DependsOn": [
+              "ApiGatewayMethodSeniorsPost",
+              "ApiGatewayMethodSeniorsGet",
+              "ApiGatewayMethodSeniorsIdVarGet",
+              "ApiGatewayMethodHomesPost",
+              "ApiGatewayMethodSensorsPost",
+              "ApiGatewayMethodAssignmentSidVarPost",
+              "ApiGatewayMethodAuthenticationPost",
+              "ApiGatewayMethodJwttokenGet"
+            ]
+          },
+          "SeniorSubmissionLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "SeniorSubmissionLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "ListSeniorsLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "ListSeniorsLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "SeniorDetailsLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "SeniorDetailsLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "HomeSubmissionLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "HomeSubmissionLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "SensorSubmissionLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "SensorSubmissionLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "SensorAssignmentLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "SensorAssignmentLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "AuthenticationLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "AuthenticationLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "JwtTokenReturnerLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "JwtTokenReturnerLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "CustomLambdaAuthenticator": {
+            "Type": "AWS::ApiGateway::Authorizer",
+            "Properties": {
+              "AuthorizerUri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:958685683239:function:authentication/invocations",
+              "AuthorizerResultTtlInSeconds": "300",
+              "Type": "TOKEN",
+              "IdentitySource": "method.request.header.authorizationToken",
+              "Name": "DefaultAuthorizer",
+              "RestApiId": "5v4mxvtxi2"
+            }
+          },
+          "SeniorsDynamoDbTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "id",
+                  "AttributeType": "S"
+                },
+                {
+                  "AttributeName": "sensorId",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "id",
+                  "KeyType": "HASH"
+                }
+              ],
+              "ProvisionedThroughput": {
+                "ReadCapacityUnits": 1,
+                "WriteCapacityUnits": 1
+              },
+              "StreamSpecification": {
+                "StreamViewType": "NEW_AND_OLD_IMAGES"
+              },
+              "TableName": "SENIORS-TABLE-senior-dev",
+              "GlobalSecondaryIndexes": [
+                {
+                  "IndexName": "sensorsIdTable",
+                  "KeySchema": [
+                    {
+                      "AttributeName": "sensorId",
+                      "KeyType": "HASH"
+                    }
+                  ],
+                  "ProvisionedThroughput": {
+                    "ReadCapacityUnits": 1,
+                    "WriteCapacityUnits": 1
+                  },
+                  "Projection": {
+                    "NonKeyAttributes": [
+                      "sensorId"
+                    ],
+                    "ProjectionType": "INCLUDE"
+                  }
+                }
+              ]
+            }
+          },
+          "HomesDynamoDbTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "homeid",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "homeid",
+                  "KeyType": "HASH"
+                }
+              ],
+              "ProvisionedThroughput": {
+                "ReadCapacityUnits": 1,
+                "WriteCapacityUnits": 1
+              },
+              "StreamSpecification": {
+                "StreamViewType": "NEW_AND_OLD_IMAGES"
+              },
+              "TableName": "HOMES-TABLE-senior-dev"
+            }
+          },
+          "SensorsDynamoDbTable": {
+            "Type": "AWS::DynamoDB::Table",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "AttributeDefinitions": [
+                {
+                  "AttributeName": "sensorid",
+                  "AttributeType": "S"
+                }
+              ],
+              "KeySchema": [
+                {
+                  "AttributeName": "sensorid",
+                  "KeyType": "HASH"
+                }
+              ],
+              "ProvisionedThroughput": {
+                "ReadCapacityUnits": 1,
+                "WriteCapacityUnits": 1
+              },
+              "StreamSpecification": {
+                "StreamViewType": "NEW_AND_OLD_IMAGES"
+              },
+              "TableName": "SENSORS-TABLE-senior-dev"
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-ServerlessDeploymentBucketName"
+            }
+          },
+          "SeniorSubmissionLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "SeniorSubmissionLambdaVersion1BYUoi0rAHLrLzOwuHNGtmU3xDkP5tYzpwamKLFVgDk"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-SeniorSubmissionLambdaFunctionQualifiedArn"
+            }
+          },
+          "ListSeniorsLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "ListSeniorsLambdaVersione2NbtvMNUQcodRmpY10j0HSw1uJwPr3NmZe4E08bq38"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-ListSeniorsLambdaFunctionQualifiedArn"
+            }
+          },
+          "SeniorDetailsLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "SeniorDetailsLambdaVersionYYhxV75k5WU1JKvWtzjDdMKCWYnUy1gQg0HIv7Mh4SY"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-SeniorDetailsLambdaFunctionQualifiedArn"
+            }
+          },
+          "HomeSubmissionLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "HomeSubmissionLambdaVersion3QudX5JpZGXCFSMU7Urcy2L1vdZn8ZxYnjUlGZMQCX4"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-HomeSubmissionLambdaFunctionQualifiedArn"
+            }
+          },
+          "SensorSubmissionLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "SensorSubmissionLambdaVersionkhvj75EhHxSjbsDvbqWPQpE0DcJXJau7iz60hMWoFso"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-SensorSubmissionLambdaFunctionQualifiedArn"
+            }
+          },
+          "SensorAssignmentLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "SensorAssignmentLambdaVersioneLnuOY22h8Qhhhjy8Ou6GiV4rHhEHdhA6QsuG8tPD0"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-SensorAssignmentLambdaFunctionQualifiedArn"
+            }
+          },
+          "AuthenticationLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "AuthenticationLambdaVersionFGvFkJmAg1iIS74Yg2wGLBuTCWqVuc330sa8o1M1E"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-AuthenticationLambdaFunctionQualifiedArn"
+            }
+          },
+          "JwtTokenReturnerLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "JwtTokenReturnerLambdaVersionXCMOvtcnD82K2ucXRreNdIVCH51nPb7rKHmXB0WA"
+            },
+            "Export": {
+              "Name": "sls-senior-dev-JwtTokenReturnerLambdaFunctionQualifiedArn"
+            }
+          },
+          "ServiceEndpoint": {
+            "Description": "URL of the service endpoint",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "https://",
+                  {
+                    "Ref": "ApiGatewayRestApi"
+                  },
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
+                  {
+                    "Ref": "AWS::URLSuffix"
+                  },
+                  "/dev"
+                ]
+              ]
+            },
+            "Export": {
+              "Name": "sls-senior-dev-ServiceEndpoint"
+            }
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+              "BucketEncryption": {
+                "ServerSideEncryptionConfiguration": [
+                  {
+                    "ServerSideEncryptionByDefault": {
+                      "SSEAlgorithm": "AES256"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "ServerlessDeploymentBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+              "Bucket": {
+                "Ref": "ServerlessDeploymentBucket"
+              },
+              "PolicyDocument": {
+                "Statement": [
+                  {
+                    "Action": "s3:*",
+                    "Effect": "Deny",
+                    "Principal": "*",
+                    "Resource": [
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            },
+                            "/*"
+                          ]
+                        ]
+                      },
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":s3:::",
+                            {
+                              "Ref": "ServerlessDeploymentBucket"
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    "Condition": {
+                      "Bool": {
+                        "aws:SecureTransport": false
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "pluginsData": {},
+    "functions": {
+      "seniorSubmission": {
+        "handler": "api/senior.submit",
+        "memorySize": 128,
+        "description": "Submit senior information.",
+        "events": [
+          {
+            "http": {
+              "path": "seniors",
+              "method": "post",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "senior-dev-seniorSubmission",
+        "package": {},
+        "memory": 128,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "SeniorSubmissionLambdaVersion1BYUoi0rAHLrLzOwuHNGtmU3xDkP5tYzpwamKLFVgDk"
+      },
+      "listSeniors": {
+        "handler": "api/senior.list",
+        "memorySize": 128,
+        "description": "List all seniors",
+        "events": [
+          {
+            "http": {
+              "path": "seniors",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "senior-dev-listSeniors",
+        "package": {},
+        "memory": 128,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "ListSeniorsLambdaVersione2NbtvMNUQcodRmpY10j0HSw1uJwPr3NmZe4E08bq38"
+      },
+      "seniorDetails": {
+        "handler": "api/senior.get",
+        "events": [
+          {
+            "http": {
+              "path": "seniors/{id}",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "senior-dev-seniorDetails",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "SeniorDetailsLambdaVersionYYhxV75k5WU1JKvWtzjDdMKCWYnUy1gQg0HIv7Mh4SY"
+      },
+      "homeSubmission": {
+        "handler": "api/home.submit",
+        "memorySize": 128,
+        "description": "submits home with homeid,name,type(NURSING/PRIVATE)",
+        "events": [
+          {
+            "http": {
+              "path": "homes",
+              "method": "post",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "senior-dev-homeSubmission",
+        "package": {},
+        "memory": 128,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "HomeSubmissionLambdaVersion3QudX5JpZGXCFSMU7Urcy2L1vdZn8ZxYnjUlGZMQCX4"
+      },
+      "sensorSubmission": {
+        "handler": "api/sensor.submit",
+        "memorySize": 128,
+        "description": "submits sensor with sensorid, hardwareVersion, softwareVersion",
+        "events": [
+          {
+            "http": {
+              "path": "sensors",
+              "method": "post",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "senior-dev-sensorSubmission",
+        "package": {},
+        "memory": 128,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "SensorSubmissionLambdaVersionkhvj75EhHxSjbsDvbqWPQpE0DcJXJau7iz60hMWoFso"
+      },
+      "sensorAssignment": {
+        "handler": "api/sensorAssignment.assignSensor",
+        "memorySize": 128,
+        "description": "Finds seior by id and assigns sensor by id to that senior",
+        "events": [
+          {
+            "http": {
+              "path": "assignment/{sid}",
+              "method": "post",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "senior-dev-sensorAssignment",
+        "package": {},
+        "memory": 128,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "SensorAssignmentLambdaVersioneLnuOY22h8Qhhhjy8Ou6GiV4rHhEHdhA6QsuG8tPD0"
+      },
+      "authentication": {
+        "handler": "api/authentication.authFunc",
+        "memorySize": 128,
+        "description": "token authorization",
+        "events": [
+          {
+            "http": {
+              "path": "authentication",
+              "method": "post",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "senior-dev-authentication",
+        "package": {},
+        "memory": 128,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "AuthenticationLambdaVersionFGvFkJmAg1iIS74Yg2wGLBuTCWqVuc330sa8o1M1E"
+      },
+      "jwtTokenReturner": {
+        "handler": "api/jwtTokenReturner.tokenReturner",
+        "memorySize": 128,
+        "description": "returns a token with value and payload (expires 1h)",
+        "events": [
+          {
+            "http": {
+              "path": "jwtToken",
+              "method": "get",
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "senior-dev-jwtTokenReturner",
+        "package": {},
+        "memory": 128,
+        "timeout": 6,
+        "runtime": "nodejs12.x",
+        "vpc": {},
+        "versionLogicalId": "JwtTokenReturnerLambdaVersionXCMOvtcnD82K2ucXRreNdIVCH51nPb7rKHmXB0WA"
+      }
+    },
+    "resources": {
+      "Resources": {
+        "CustomLambdaAuthenticator": {
+          "Type": "AWS::ApiGateway::Authorizer",
+          "Properties": {
+            "AuthorizerUri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:958685683239:function:authentication/invocations",
+            "AuthorizerResultTtlInSeconds": "300",
+            "Type": "TOKEN",
+            "IdentitySource": "method.request.header.authorizationToken",
+            "Name": "DefaultAuthorizer",
+            "RestApiId": "5v4mxvtxi2"
+          }
+        },
+        "SeniorsDynamoDbTable": {
+          "Type": "AWS::DynamoDB::Table",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "id",
+                "AttributeType": "S"
+              },
+              {
+                "AttributeName": "sensorId",
+                "AttributeType": "S"
+              }
+            ],
+            "KeySchema": [
+              {
+                "AttributeName": "id",
+                "KeyType": "HASH"
+              }
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 1,
+              "WriteCapacityUnits": 1
+            },
+            "StreamSpecification": {
+              "StreamViewType": "NEW_AND_OLD_IMAGES"
+            },
+            "TableName": "SENIORS-TABLE-senior-dev",
+            "GlobalSecondaryIndexes": [
+              {
+                "IndexName": "sensorsIdTable",
+                "KeySchema": [
+                  {
+                    "AttributeName": "sensorId",
+                    "KeyType": "HASH"
+                  }
+                ],
+                "ProvisionedThroughput": {
+                  "ReadCapacityUnits": 1,
+                  "WriteCapacityUnits": 1
+                },
+                "Projection": {
+                  "NonKeyAttributes": [
+                    "sensorId"
+                  ],
+                  "ProjectionType": "INCLUDE"
+                }
+              }
+            ]
+          }
+        },
+        "HomesDynamoDbTable": {
+          "Type": "AWS::DynamoDB::Table",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "homeid",
+                "AttributeType": "S"
+              }
+            ],
+            "KeySchema": [
+              {
+                "AttributeName": "homeid",
+                "KeyType": "HASH"
+              }
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 1,
+              "WriteCapacityUnits": 1
+            },
+            "StreamSpecification": {
+              "StreamViewType": "NEW_AND_OLD_IMAGES"
+            },
+            "TableName": "HOMES-TABLE-senior-dev"
+          }
+        },
+        "SensorsDynamoDbTable": {
+          "Type": "AWS::DynamoDB::Table",
+          "DeletionPolicy": "Retain",
+          "Properties": {
+            "AttributeDefinitions": [
+              {
+                "AttributeName": "sensorid",
+                "AttributeType": "S"
+              }
+            ],
+            "KeySchema": [
+              {
+                "AttributeName": "sensorid",
+                "KeyType": "HASH"
+              }
+            ],
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 1,
+              "WriteCapacityUnits": 1
+            },
+            "StreamSpecification": {
+              "StreamViewType": "NEW_AND_OLD_IMAGES"
+            },
+            "TableName": "SENSORS-TABLE-senior-dev"
+          }
+        }
+      },
+      "Outputs": {}
+    },
+    "configValidationMode": "warn",
+    "serviceFilename": "serverless.yml",
+    "initialServerlessConfig": {
+      "service": {
+        "$ref": "$[\"service\"][\"serviceObject\"]"
+      },
+      "frameworkVersion": "2",
+      "provider": {
+        "$ref": "$[\"service\"][\"provider\"]"
+      },
+      "functions": {
+        "$ref": "$[\"service\"][\"functions\"]"
+      },
+      "resources": {
+        "$ref": "$[\"service\"][\"resources\"]"
+      }
+    },
+    "layers": {},
+    "isDashboardMonitoringPreconfigured": false,
+    "artifact": "D:\\Projects\\BackendSoftwareEngineerChallenge\\senior-service\\.serverless\\senior.zip"
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/senior/dev/1630445811178-2021-08-31T21:36:51.178Z",
+    "artifact": "senior.zip"
+  }
+}
