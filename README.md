@@ -1,4 +1,4 @@
-Project Title
+# Project Title
 Our system consists of Nursing / Private Homes.
 Each Nursing / Private Home has seniors.
 Each senior can have a sensor.
@@ -16,41 +16,41 @@ returning a JWT object for authorization signed by a Private key
 and containing a name in the payload.
 The functionality was implemented using a REST API.
 
-Motivation
+# Motivation
 Backend Junior Software Engineer Challenge.
 (All given Parts were implemented)
 
-Build Status
+# Build Status
 Error control in methods that AWS ecosystem could compenaste in producing errors is default.
 Although the Lambda Authorizer and its lambda function were created throught serverless configuration,
 In the current build there is missing an authorization integrated method notation with permission.
 The API Gateway Lambda Authorizer was granted permission through the AWS console and the
 endpoints that were to use the Authorization were linked with the authorizer by console.
 
-Tech/Framework used
+# Tech/Framework used
 AWS ecosystem(Lambda, DynamoDB, API Gateway) and use Node.js-Typescript.
 
 Code Examples and API reference is provided:
 In the Test Cases below.
 
-Installation
+# Installation
 With the serverless cli installed you cant time serverless deploy at senior-service folder,
 then through the AWS console grant access to the authorizer and from the method Requests of
 each Resource assign the DefaultAuthorizer in Authorization.
 
-Tests
+# Tests
 Multiple calls with both valid and invalid parameters request bodies and authorization headers to
 the API were performed to check for error control and accuracy.
 
 
-TEST CASES using POSTMAN
+# TEST CASES using POSTMAN
 require a JWT token from endpoint:
 
 https://5v4mxvtxi2.execute-api.us-east-1.amazonaws.com/dev/jwtToken
 
 !!USE THE RETURNED ENCODED TOKEN AS VALUE FOR THE REST!!
 
-HOME ENDPOINT-----------------------------------------------------------------
+## HOME ENDPOINT
 Method:
 POST
 endpoint:
@@ -62,7 +62,7 @@ JWT endpoint value
 for the request body (in postman use raw data):
 {"homeId":"3","homename":"4","type":"PRIVATE"} // or "NURSING"
 
-SENSOR ENDPOINT-----------------------------------------------------------------
+## SENSOR ENDPOINT
 Method:
 POST
 endpoint:
@@ -74,8 +74,8 @@ JWT endpoint value
 for the request body (in postman use raw data):
 {"sensorId":"3","hardwareVersion":"4.1","softwareVersion":"3.2"}
 
-SENIOR ENDPOINT-----------------------------------------------------------------
-SUBMIT ENDPOINT------
+## SENIOR ENDPOINT
+### SUBMIT ENDPOINT
 Method:
 POST
 endpoint:
@@ -87,7 +87,7 @@ JWT endpoint value
 for the request body (in postman use raw data):
 {"seniorId":"3","fullname":"somename","homeId":"3"} // must be an existing home id or error
 
-RETURN SENIOR BY ID ENDPOINT--------------------------------------
+### RETURN SENIOR BY ID ENDPOINT
 Method:
 GET
 endpoint:
@@ -99,7 +99,7 @@ JWT endpoint value
 for the request parameter for id "2" should be denoted as such:
 https://5v4mxvtxi2.execute-api.us-east-1.amazonaws.com/dev/seniors/2
 
-RETURN ALL SENIORS LIST (NOT REQUESTED IN CHALLENGE)--------------
+### RETURN ALL SENIORS LIST (NOT REQUESTED IN CHALLENGE)
 Method:
 GET
 endpoint:
@@ -109,7 +109,7 @@ authorizationToken
 value:
 JWT endpoint value
 
-ASSIGN AN UNASSIGNED SENSOR TO A SENIOR ENDPOINT-------------------
+### ASSIGN AN UNASSIGNED SENSOR TO A SENIOR ENDPOINT
 Method:
 POST
 endpoint:
